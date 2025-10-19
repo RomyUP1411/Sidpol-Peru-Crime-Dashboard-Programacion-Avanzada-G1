@@ -1,7 +1,7 @@
 import pandas as pd
 
-# Leer el CSV
+# Read the CSV file
 df = pd.read_csv(r"RomyUP1411/Sidpol-Peru-Crime-Dashboard-Programacion-Avanzada-G1/project-root/data/DATASET_Denuncias_Policiales_Enero 2018 a Setiembre 2025.csv")
 
-# Mostrar primeras filas del Dataframe
+# Display the first few rows of the dataframe
 print(df.head())
