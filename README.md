@@ -37,3 +37,4 @@ Prototipo en Streamlit para explorar denuncias policiales del Perú a partir de 
     streamlit run src/app.py​
 6) Abrir en el navegador:
     http://localhost:8501 y usar los controles (Año, Modalidades, Departamento, Provincia, Mes).
+
