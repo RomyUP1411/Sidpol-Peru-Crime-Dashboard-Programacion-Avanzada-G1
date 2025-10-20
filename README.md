@@ -23,18 +23,15 @@ Prototipo en Streamlit para explorar denuncias policiales del Perú a partir de 
 
 ## Ejecución local (Windows PowerShell)
 
-1) Clonar o descargar el repo y abrirlo en VS Code en la carpeta raíz (donde están data/ y src/).​
+1) Clonar o descargar el repo y abrir la carpeta del proyecto en VS Code y abrir la Terminal en la raíz (donde están data/ y src/).​
 2) Crear el entorno virtual (solo la primera vez en cada equipo):
     python -m venv .venv​
-3) Activar el entorno virtual:
-    PowerShell: Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-    PowerShell: .venv\Scripts\Activate.ps1
-    CMD: .venv\Scripts\activate.bat
-    macOS/Linux: source .venv/bin/activate​
+3) Habilitar scripts SOLO para esta ventana y activar la venv:
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+    - LUEGO:
+    .venv\Scripts\Activate.ps1
 4) Instalar dependencias (primera vez o si cambió requirements.txt):
     pip install -r requirements.txt​
 5) Ejecutar la app de Streamlit desde la raíz del proyecto:
-    streamlit run src/app.py​
-6) Abrir en el navegador:
-    http://localhost:8501 y usar los controles (Año, Modalidades, Departamento, Provincia, Mes).
-
+    streamlit run src/app.py
+    (se abrirá en http://localhost:8501)
