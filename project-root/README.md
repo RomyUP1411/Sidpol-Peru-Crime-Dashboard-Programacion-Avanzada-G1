@@ -43,7 +43,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
 pip install -r requirements.txt
 ```
 
-5) Ejecutar la app de Streamlit desde la raíz del proyecto:
+5) Ejecutar la app de Streamlit:
 
 ```python
 streamlit run src/app.py
