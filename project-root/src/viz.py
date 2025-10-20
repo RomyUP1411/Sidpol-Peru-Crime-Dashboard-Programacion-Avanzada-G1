@@ -1,7 +1,7 @@
 import altair as alt
 import pandas as pd
 
-# Orden y paleta por modalidades (según categorías del dataset)
+# Orden y paleta fija por modalidades (conforme a categorías del recurso)
 MOD_ORDER = [
     "Homicidio",
     "Robo",
@@ -22,6 +22,7 @@ MOD_COLORS = [
 ]
 MOD_SCALE = alt.Scale(domain=MOD_ORDER, range=MOD_COLORS)
 
+# Barras por modalidad con color consistente por categoría
 def bar_modalidad(df: pd.DataFrame):
     return (
         alt.Chart(df)
@@ -30,11 +31,12 @@ def bar_modalidad(df: pd.DataFrame):
             x=alt.X("MODALIDADES:N", sort="-y", title="Modalidad"),
             y=alt.Y("cantidad:Q", title="Denuncias"),
             color=alt.Color("MODALIDADES:N", scale=MOD_SCALE, legend=alt.Legend(title="Modalidad")),
-            tooltip=["MODALIDADES","cantidad"]
+            tooltip=["MODALIDADES", "cantidad"]
         )
         .properties(height=320)
     )
 
+# Línea de tendencia mensual (1–12)
 def line_trend(df: pd.DataFrame):
     return (
         alt.Chart(df)
@@ -42,11 +44,12 @@ def line_trend(df: pd.DataFrame):
         .encode(
             x=alt.X("MES:O", title="Mes"),
             y=alt.Y("cantidad:Q", title="Denuncias"),
-            tooltip=["MES","cantidad"]
+            tooltip=["MES", "cantidad"]
         )
         .properties(height=280)
     )
 
+# Top 10 departamentos por total
 def bar_top_departamentos(df: pd.DataFrame):
     return (
         alt.Chart(df)
@@ -54,11 +57,12 @@ def bar_top_departamentos(df: pd.DataFrame):
         .encode(
             y=alt.Y("DEPARTAMENTO:N", sort="-x", title="Departamento"),
             x=alt.X("cantidad:Q", title="Denuncias"),
-            tooltip=["DEPARTAMENTO","cantidad"]
+            tooltip=["DEPARTAMENTO", "cantidad"]
         )
         .properties(height=320)
     )
 
+# Heatmap modalidad x mes para ver estacionalidad por categoría
 def heatmap_mod_mes(df: pd.DataFrame):
     return (
         alt.Chart(df)
@@ -67,7 +71,7 @@ def heatmap_mod_mes(df: pd.DataFrame):
             x=alt.X("MES:O", title="Mes"),
             y=alt.Y("MODALIDADES:N", title="Modalidad"),
             color=alt.Color("cantidad:Q", title="Denuncias"),
-            tooltip=["MODALIDADES","MES","cantidad"]
+            tooltip=["MODALIDADES", "MES", "cantidad"]
         )
         .properties(height=320)
     )
