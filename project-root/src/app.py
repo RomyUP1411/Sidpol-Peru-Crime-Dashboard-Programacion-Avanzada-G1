@@ -66,14 +66,14 @@ k2.metric(label="Variación % vs período previo", value=f"{kpis['var_pct']}%")
 k3.metric(label="Modalidad más frecuente", value=kpis["top_modalidad"])
 k4.metric(label="Departamento con más denuncias", value=kpis["top_departamento"])
 
-# Tabla principal
+# Tabla principal (selección segura de columnas)
 st.subheader("Tabla filtrada")
-if df_f.empty:
-    st.info("No hay registros para el filtro seleccionado.")
+display_cols = [c for c in ["AÑO", "MES", "DEPARTAMENTO", "PROVINCIA", "DISTRITO", "MODALIDADES", "cantidad"] if c in df_f.columns]
+if df_f.empty or not display_cols:
+    st.info("No hay registros o columnas esperadas para el filtro seleccionado.")
 else:
     st.dataframe(
-        df_f[["AÑO", "MES", "DEPARTAMENTO", "PROVINCIA", "DISTRITO", "MODALIDADES", "cantidad"]]
-        .sort_values(["MES", "cantidad"], ascending=[True, False]),
+        df_f[display_cols].sort_values(["MES", "cantidad"], ascending=[True, False]),
         use_container_width=True,
     )
 

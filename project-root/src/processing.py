@@ -12,38 +12,55 @@ def data_path() -> Path:
     exact = data_dir / "DATASET_Denuncias_Policiales_Enero 2018 a Setiembre 2025.csv"
     if exact.exists():
         return exact
-    # Fallback: primer CSV que empiece con "DATASET_Denuncias_Policiales"
+    # Fallback: primer CSV que empiece con el patrón
     for p in sorted(data_dir.glob("DATASET_Denuncias_Policiales*.csv")):
         return p
     raise FileNotFoundError("No se encontró el CSV en data/; verifica el nombre o ruta.")
 
 
-# Lee el CSV original (nombres del recurso oficial)
+# Lee el CSV original (maneja BOM y carga perezosa)
 def load_raw(path: Path) -> pd.DataFrame:
-    return pd.read_csv(path, encoding="utf-8", low_memory=False)
+    return pd.read_csv(path, encoding="utf-8-sig", low_memory=False)
+
+
+# Normaliza nombres de columnas
+def _normalize_cols(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    df.columns = [c.strip() for c in df.columns]
+    return df
 
 
 # Limpia, tipifica y renombra encabezados para la UI
 def clean(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy()
+    df = _normalize_cols(df)
 
-    # Tipificación básica conforme al diccionario
-    if "ANIO" in df.columns:
-        df["ANIO"] = pd.to_numeric(df["ANIO"], errors="coerce").astype("Int64")
+    # Soporta variantes con y sin subrayados
+    rename_candidates = {
+        "ANIO": "AÑO",
+        "AÑO": "AÑO",
+        "MES": "MES",
+        "DPTOHECHONEW": "DEPARTAMENTO",
+        "DPTO_HECHO_NEW": "DEPARTAMENTO",
+        "PROVHECHO": "PROVINCIA",
+        "PROV_HECHO": "PROVINCIA",
+        "DISTHECHO": "DISTRITO",
+        "DIST_HECHO": "DISTRITO",
+        "PMODALIDADES": "MODALIDADES",
+        "P_MODALIDADES": "MODALIDADES",
+        "cantidad": "cantidad",
+        "CANTIDAD": "cantidad",
+    }
+    # Construir mapa efectivo solo con columnas presentes
+    effective_map = {src: dst for src, dst in rename_candidates.items() if src in df.columns}
+    df = df.rename(columns=effective_map)
+
+    # Tipificación conforme al diccionario
+    if "AÑO" in df.columns:
+        df["AÑO"] = pd.to_numeric(df["AÑO"], errors="coerce").astype("Int64")
     if "MES" in df.columns:
         df["MES"] = pd.to_numeric(df["MES"], errors="coerce").astype("Int64")
     if "cantidad" in df.columns:
         df["cantidad"] = pd.to_numeric(df["cantidad"], errors="coerce").fillna(0).astype("int64")
-
-    # Renombrar columnas del recurso a nombres legibles en la UI
-    rename_map = {
-        "ANIO": "AÑO",
-        "DPTOHECHONEW": "DEPARTAMENTO",
-        "PROVHECHO": "PROVINCIA",
-        "DISTHECHO": "DISTRITO",
-        "PMODALIDADES": "MODALIDADES",
-    }
-    df = df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns})
 
     # Asegurar tipos string para categóricas esperadas
     for col in ["DEPARTAMENTO", "PROVINCIA", "DISTRITO", "MODALIDADES"]:
@@ -90,7 +107,7 @@ def filter_df(
 
 # Agregaciones para visualizaciones
 def by_modalidad(df: pd.DataFrame) -> pd.DataFrame:
-    if df.empty:
+    if df.empty or "MODALIDADES" not in df.columns:
         return pd.DataFrame({"MODALIDADES": [], "cantidad": []})
     return (
         df.groupby("MODALIDADES", as_index=False)["cantidad"]
@@ -100,7 +117,7 @@ def by_modalidad(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def monthly_trend(df: pd.DataFrame) -> pd.DataFrame:
-    if df.empty:
+    if df.empty or "MES" not in df.columns:
         return pd.DataFrame({"MES": [], "cantidad": []})
     return (
         df.groupby("MES", as_index=False)["cantidad"]
@@ -110,7 +127,7 @@ def monthly_trend(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def top_departamentos(df: pd.DataFrame, n: int = 10) -> pd.DataFrame:
-    if df.empty:
+    if df.empty or "DEPARTAMENTO" not in df.columns:
         return pd.DataFrame({"DEPARTAMENTO": [], "cantidad": []})
     return (
         df.groupby("DEPARTAMENTO", as_index=False)["cantidad"]
@@ -121,7 +138,7 @@ def top_departamentos(df: pd.DataFrame, n: int = 10) -> pd.DataFrame:
 
 
 def heatmap_modalidad_mes(df: pd.DataFrame) -> pd.DataFrame:
-    if df.empty:
+    if df.empty or not {"MODALIDADES", "MES"}.issubset(df.columns):
         return pd.DataFrame({"MODALIDADES": [], "MES": [], "cantidad": []})
     return (
         df.groupby(["MODALIDADES", "MES"], as_index=False)["cantidad"]
@@ -132,18 +149,14 @@ def heatmap_modalidad_mes(df: pd.DataFrame) -> pd.DataFrame:
 
 # KPIs calculados sobre el DataFrame filtrado
 def compute_kpis(df: pd.DataFrame) -> Dict[str, object]:
-    if df.empty:
+    if df.empty or "cantidad" not in df.columns:
         return {"total": 0, "var_pct": 0.0, "top_modalidad": "N/A", "top_departamento": "N/A"}
 
     total = int(df["cantidad"].sum())
 
     var_pct = 0.0
     if all(c in df.columns for c in ["AÑO", "MES"]):
-        series = (
-            df.groupby(["AÑO", "MES"])["cantidad"]
-            .sum()
-            .sort_index()
-        )
+        series = df.groupby(["AÑO", "MES"])["cantidad"].sum().sort_index()
         if len(series) >= 2:
             prev = series.iloc[-2]
             curr = series.iloc[-1]
