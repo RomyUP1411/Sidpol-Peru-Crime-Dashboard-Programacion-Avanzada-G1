@@ -31,7 +31,7 @@ Prototipo en Streamlit para explorar denuncias policiales del Perú a partir de 
     - LUEGO:
     .venv\Scripts\Activate.ps1
 4) Instalar dependencias (primera vez o si cambió requirements.txt):
-    pip install -r requirements.txt​
+    pip install -r requirements.txt
 5) Ejecutar la app de Streamlit desde la raíz del proyecto:
     streamlit run src/app.py​
     - Se abrirá: http://localhost:8501 y usar los controles (Año, Modalidades, Departamento, Provincia, Mes).
