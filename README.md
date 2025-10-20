@@ -24,7 +24,7 @@ Prototipo en Streamlit para explorar denuncias policiales del Perú a partir de 
 ## Ejecución local (Windows PowerShell)
 
 1) Clonar o descargar el repo y abrirlo en VS Code en la carpeta raíz (donde están data/ y src/).​
-2) Crear el entorno virtual (solo la primera vez en cada equipo):
+2) Crear el entorno virtual desde el terminal en la carpeta del proyecto (solo la primera vez en cada equipo):
     python -m venv .venv​
 3) Activar el entorno virtual:
     Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
