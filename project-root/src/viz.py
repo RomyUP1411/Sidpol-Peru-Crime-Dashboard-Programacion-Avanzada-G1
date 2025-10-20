@@ -1,7 +1,7 @@
 import altair as alt
 import pandas as pd
 
-# Paleta fija por modalidad (basado en las categorías del diccionario)
+# Orden y paleta por modalidades (según categorías del dataset)
 MOD_ORDER = [
     "Homicidio",
     "Robo",
@@ -35,17 +35,39 @@ def bar_modalidad(df: pd.DataFrame):
         .properties(height=320)
     )
 
-# Si tienes otro gráfico de barras por MODALIDADES, aplica la misma color scale:
-def bar_modalidad_por_depto(df: pd.DataFrame):
-    # ejemplo opcional: barras apiladas por modalidad dentro de departamento
+def line_trend(df: pd.DataFrame):
+    return (
+        alt.Chart(df)
+        .mark_line(point=True)
+        .encode(
+            x=alt.X("MES:O", title="Mes"),
+            y=alt.Y("cantidad:Q", title="Denuncias"),
+            tooltip=["MES","cantidad"]
+        )
+        .properties(height=280)
+    )
+
+def bar_top_departamentos(df: pd.DataFrame):
     return (
         alt.Chart(df)
         .mark_bar()
         .encode(
-            x=alt.X("DEPARTAMENTO:N", title="Departamento"),
-            y=alt.Y("cantidad:Q", title="Denuncias"),
-            color=alt.Color("MODALIDADES:N", scale=MOD_SCALE, legend=alt.Legend(title="Modalidad")),
-            tooltip=["DEPARTAMENTO","MODALIDADES","cantidad"]
+            y=alt.Y("DEPARTAMENTO:N", sort="-x", title="Departamento"),
+            x=alt.X("cantidad:Q", title="Denuncias"),
+            tooltip=["DEPARTAMENTO","cantidad"]
+        )
+        .properties(height=320)
+    )
+
+def heatmap_mod_mes(df: pd.DataFrame):
+    return (
+        alt.Chart(df)
+        .mark_rect()
+        .encode(
+            x=alt.X("MES:O", title="Mes"),
+            y=alt.Y("MODALIDADES:N", title="Modalidad"),
+            color=alt.Color("cantidad:Q", title="Denuncias"),
+            tooltip=["MODALIDADES","MES","cantidad"]
         )
         .properties(height=320)
     )
