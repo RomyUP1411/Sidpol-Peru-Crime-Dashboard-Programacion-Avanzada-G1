@@ -1,3 +1,6 @@
+# src/viz.py
+from __future__ import annotations
+
 import altair as alt
 import pandas as pd
 
@@ -22,56 +25,67 @@ MOD_COLORS = [
 ]
 MOD_SCALE = alt.Scale(domain=MOD_ORDER, range=MOD_COLORS)
 
-# Barras por modalidad con color consistente por categoría
-def bar_modalidad(df: pd.DataFrame):
+
+# Barras por modalidad con color consistente
+def bar_modalidad(df: pd.DataFrame) -> alt.Chart:
+    base = alt.Chart(df)
     return (
-        alt.Chart(df)
-        .mark_bar()
+        base.mark_bar()
         .encode(
             x=alt.X("MODALIDADES:N", sort="-y", title="Modalidad"),
             y=alt.Y("cantidad:Q", title="Denuncias"),
             color=alt.Color("MODALIDADES:N", scale=MOD_SCALE, legend=alt.Legend(title="Modalidad")),
-            tooltip=["MODALIDADES", "cantidad"]
+            tooltip=[alt.Tooltip("MODALIDADES:N", title="Modalidad"), alt.Tooltip("cantidad:Q", title="Denuncias")],
         )
         .properties(height=320)
     )
 
+
 # Línea de tendencia mensual (1–12)
-def line_trend(df: pd.DataFrame):
+def line_trend(df: pd.DataFrame) -> alt.Chart:
+    base = alt.Chart(df)
     return (
-        alt.Chart(df)
-        .mark_line(point=True)
+        base.mark_line(point=True)
         .encode(
             x=alt.X("MES:O", title="Mes"),
             y=alt.Y("cantidad:Q", title="Denuncias"),
-            tooltip=["MES", "cantidad"]
+            tooltip=[alt.Tooltip("MES:O", title="Mes"), alt.Tooltip("cantidad:Q", title="Denuncias")],
         )
         .properties(height=280)
     )
 
-# Top 10 departamentos por total
-def bar_top_departamentos(df: pd.DataFrame):
-    return (
-        alt.Chart(df)
-        .mark_bar()
+
+# Top N departamentos por total
+def bar_top_departamentos(df: pd.DataFrame, title: str | None = None) -> alt.Chart:
+    base = alt.Chart(df)
+    chart = (
+        base.mark_bar()
         .encode(
             y=alt.Y("DEPARTAMENTO:N", sort="-x", title="Departamento"),
             x=alt.X("cantidad:Q", title="Denuncias"),
-            tooltip=["DEPARTAMENTO", "cantidad"]
+            tooltip=[alt.Tooltip("DEPARTAMENTO:N", title="Departamento"), alt.Tooltip("cantidad:Q", title="Denuncias")],
         )
         .properties(height=320)
     )
+    if title:
+        chart = chart.properties(title=title)
+    return chart
 
-# Heatmap modalidad x mes para ver estacionalidad por categoría
-def heatmap_mod_mes(df: pd.DataFrame):
+
+# Heatmap modalidad x mes
+def heatmap_mod_mes(df: pd.DataFrame) -> alt.Chart:
+    base = alt.Chart(df)
     return (
-        alt.Chart(df)
-        .mark_rect()
+        base.mark_rect()
         .encode(
             x=alt.X("MES:O", title="Mes"),
             y=alt.Y("MODALIDADES:N", title="Modalidad"),
             color=alt.Color("cantidad:Q", title="Denuncias"),
-            tooltip=["MODALIDADES", "MES", "cantidad"]
+            tooltip=[
+                alt.Tooltip("MODALIDADES:N", title="Modalidad"),
+                alt.Tooltip("MES:O", title="Mes"),
+                alt.Tooltip("cantidad:Q", title="Denuncias"),
+            ],
         )
         .properties(height=320)
     )
