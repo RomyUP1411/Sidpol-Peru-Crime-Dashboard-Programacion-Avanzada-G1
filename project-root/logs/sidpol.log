@@ -1,0 +1,180 @@
+2025-11-19 17:33:01,227 [INFO] sidpol: === Aplicación Streamlit iniciada ===
+2025-11-19 17:33:01,671 [INFO] sidpol: Esquema de BD creado/verificado
+2025-11-19 17:33:01,673 [DEBUG] sidpol: Consulta SQL ejecutada, 4 filas retornadas
+2025-11-19 17:33:01,683 [INFO] sidpol: Esquema de BD creado/verificado
+2025-11-19 17:33:01,686 [DEBUG] sidpol: Consulta SQL ejecutada, 0 filas retornadas
+2025-11-19 17:33:01,693 [DEBUG] sidpol: Encontrados 1 archivos de datos
+2025-11-19 17:33:01,695 [DEBUG] sidpol: Archivo de datos más reciente: DATASET_Denuncias_Policiales_Enero 2018 a Setiembre 2025.csv
+2025-11-19 17:33:01,696 [INFO] sidpol: Esquema de BD creado/verificado
+2025-11-19 17:33:01,698 [DEBUG] sidpol: Consulta SQL ejecutada, 1 filas retornadas
+2025-11-19 17:33:01,699 [INFO] sidpol: obtener_estadisticas_generales ejecutado en 0.003s
+2025-11-19 17:33:01,701 [WARNING] sidpol: Error mostrando KPIs de BD: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+2025-11-19 17:33:01,964 [INFO] sidpol: CSV cargado: DATASET_Denuncias_Policiales_Enero 2018 a Setiembre 2025.csv (332928 filas)
+2025-11-19 17:33:01,965 [INFO] sidpol: load_raw ejecutado en 0.264s
+2025-11-19 17:33:02,049 [INFO] sidpol: Clean: 332928 → 332928 filas (removidas 0)
+2025-11-19 17:33:02,050 [INFO] sidpol: clean ejecutado en 0.085s
+2025-11-19 17:33:02,054 [INFO] sidpol: Datos cargados en cache: DATASET_Denuncias_Policiales_Enero 2018 a Setiembre 2025.csv
+2025-11-19 17:33:02,178 [DEBUG] sidpol: Filtro año=2025: 34665 filas
+2025-11-19 17:33:02,183 [DEBUG] sidpol: Filtro modalidades=3: 6891 filas
+2025-11-19 17:33:02,184 [DEBUG] sidpol: Filtro meses=[1-12]: 6891 filas
+2025-11-19 17:33:02,184 [INFO] sidpol: Filter_df: 332928 → 6891 filas aplicadas
+2025-11-19 17:33:02,184 [INFO] sidpol: Filtros aplicados: 6891 filas resultantes
+2025-11-19 17:33:02,203 [INFO] sidpol: by_modalidad ejecutado en 0.002s
+2025-11-19 17:33:02,247 [INFO] sidpol: monthly_trend ejecutado en 0.001s
+2025-11-19 17:33:02,262 [INFO] sidpol: top_departamentos ejecutado en 0.002s
+2025-11-19 17:33:02,279 [INFO] sidpol: Predicción generada para 3 meses
+2025-11-19 17:33:02,279 [INFO] sidpol: predict_monthly_trend ejecutado en 0.003s
+2025-11-19 17:33:02,280 [INFO] sidpol: monthly_trend ejecutado en 0.001s
+2025-11-19 17:33:02,297 [INFO] sidpol: calculate_growth_rate ejecutado en 0.002s
+2025-11-19 17:33:02,325 [INFO] sidpol: Matriz de correlación calculada
+2025-11-19 17:33:02,328 [ERROR] sidpol: Error correlación: "The following id_vars or value_vars are not present in the DataFrame: ['DEPARTAMENTO']"
+Traceback (most recent call last):
+  File "C:\Users\ferna\Documents\GitHub\Sidpol-Peru-Crime-Dashboard-Programacion-Avanzada-G1\project-root\src\app.py", line 471, in <module>
+    corr_flat = corr_matrix.reset_index().melt(id_vars="DEPARTAMENTO")
+  File "C:\Users\ferna\Documents\GitHub\Sidpol-Peru-Crime-Dashboard-Programacion-Avanzada-G1\project-root\.venv\Lib\site-packages\pandas\core\frame.py", line 9969, in melt
+    return melt(
+           ~~~~^
+        self,
+        ^^^^^
+    ...<5 lines>...
+        ignore_index=ignore_index,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).__finalize__(self, method="melt")
+    ^
+  File "C:\Users\ferna\Documents\GitHub\Sidpol-Peru-Crime-Dashboard-Programacion-Avanzada-G1\project-root\.venv\Lib\site-packages\pandas\core\reshape\melt.py", line 74, in melt
+    raise KeyError(
+    ...<2 lines>...
+    )
+KeyError: "The following id_vars or value_vars are not present in the DataFrame: ['DEPARTAMENTO']"
+2025-11-19 17:33:18,064 [INFO] sidpol: === Aplicación Streamlit iniciada ===
+2025-11-19 17:33:18,072 [INFO] sidpol: Esquema de BD creado/verificado
+2025-11-19 17:33:18,074 [DEBUG] sidpol: Consulta SQL ejecutada, 4 filas retornadas
+2025-11-19 17:33:18,079 [INFO] sidpol: Esquema de BD creado/verificado
+2025-11-19 17:33:18,082 [DEBUG] sidpol: Consulta SQL ejecutada, 0 filas retornadas
+2025-11-19 17:33:18,085 [DEBUG] sidpol: Encontrados 1 archivos de datos
+2025-11-19 17:33:18,087 [DEBUG] sidpol: Archivo de datos más reciente: DATASET_Denuncias_Policiales_Enero 2018 a Setiembre 2025.csv
+2025-11-19 17:33:18,089 [INFO] sidpol: Esquema de BD creado/verificado
+2025-11-19 17:33:18,091 [DEBUG] sidpol: Consulta SQL ejecutada, 1 filas retornadas
+2025-11-19 17:33:18,091 [INFO] sidpol: obtener_estadisticas_generales ejecutado en 0.004s
+2025-11-19 17:33:18,094 [WARNING] sidpol: Error mostrando KPIs de BD: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+2025-11-19 17:33:18,287 [DEBUG] sidpol: Filtro año=2025: 34665 filas
+2025-11-19 17:33:18,289 [DEBUG] sidpol: Filtro modalidades=3: 6891 filas
+2025-11-19 17:33:18,290 [DEBUG] sidpol: Filtro meses=[1-12]: 6891 filas
+2025-11-19 17:33:18,290 [INFO] sidpol: Filter_df: 332928 → 6891 filas aplicadas
+2025-11-19 17:33:18,291 [INFO] sidpol: Filtros aplicados: 6891 filas resultantes
+2025-11-19 17:33:18,308 [INFO] sidpol: by_modalidad ejecutado en 0.002s
+2025-11-19 17:33:18,326 [INFO] sidpol: monthly_trend ejecutado en 0.001s
+2025-11-19 17:33:18,341 [INFO] sidpol: top_departamentos ejecutado en 0.003s
+2025-11-19 17:33:18,358 [INFO] sidpol: Predicción generada para 3 meses
+2025-11-19 17:33:18,359 [INFO] sidpol: predict_monthly_trend ejecutado en 0.004s
+2025-11-19 17:33:18,361 [INFO] sidpol: monthly_trend ejecutado en 0.002s
+2025-11-19 17:33:18,384 [INFO] sidpol: calculate_growth_rate ejecutado en 0.003s
+2025-11-19 17:33:18,413 [INFO] sidpol: Matriz de correlación calculada
+2025-11-19 17:33:18,417 [ERROR] sidpol: Error correlación: "The following id_vars or value_vars are not present in the DataFrame: ['DEPARTAMENTO']"
+Traceback (most recent call last):
+  File "C:\Users\ferna\Documents\GitHub\Sidpol-Peru-Crime-Dashboard-Programacion-Avanzada-G1\project-root\src\app.py", line 471, in <module>
+    corr_flat = corr_matrix.reset_index().melt(id_vars="DEPARTAMENTO")
+  File "C:\Users\ferna\Documents\GitHub\Sidpol-Peru-Crime-Dashboard-Programacion-Avanzada-G1\project-root\.venv\Lib\site-packages\pandas\core\frame.py", line 9969, in melt
+    return melt(
+           ~~~~^
+        self,
+        ^^^^^
+    ...<5 lines>...
+        ignore_index=ignore_index,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).__finalize__(self, method="melt")
+    ^
+  File "C:\Users\ferna\Documents\GitHub\Sidpol-Peru-Crime-Dashboard-Programacion-Avanzada-G1\project-root\.venv\Lib\site-packages\pandas\core\reshape\melt.py", line 74, in melt
+    raise KeyError(
+    ...<2 lines>...
+    )
+KeyError: "The following id_vars or value_vars are not present in the DataFrame: ['DEPARTAMENTO']"
+2025-11-19 17:33:19,679 [INFO] sidpol: === Aplicación Streamlit iniciada ===
+2025-11-19 17:33:19,682 [INFO] sidpol: Usuario Fernando inició sesión
+2025-11-19 17:33:19,690 [INFO] sidpol: Esquema de BD creado/verificado
+2025-11-19 17:33:19,691 [DEBUG] sidpol: Consulta SQL ejecutada, 4 filas retornadas
+2025-11-19 17:33:19,694 [INFO] sidpol: Esquema de BD creado/verificado
+2025-11-19 17:33:19,696 [DEBUG] sidpol: Consulta SQL ejecutada, 0 filas retornadas
+2025-11-19 17:33:19,701 [DEBUG] sidpol: Encontrados 1 archivos de datos
+2025-11-19 17:33:19,702 [DEBUG] sidpol: Archivo de datos más reciente: DATASET_Denuncias_Policiales_Enero 2018 a Setiembre 2025.csv
+2025-11-19 17:33:19,704 [INFO] sidpol: Esquema de BD creado/verificado
+2025-11-19 17:33:19,705 [DEBUG] sidpol: Consulta SQL ejecutada, 1 filas retornadas
+2025-11-19 17:33:19,705 [INFO] sidpol: obtener_estadisticas_generales ejecutado en 0.002s
+2025-11-19 17:33:19,708 [WARNING] sidpol: Error mostrando KPIs de BD: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+2025-11-19 17:33:19,875 [DEBUG] sidpol: Filtro año=2025: 34665 filas
+2025-11-19 17:33:19,879 [DEBUG] sidpol: Filtro modalidades=3: 6891 filas
+2025-11-19 17:33:19,880 [DEBUG] sidpol: Filtro meses=[1-12]: 6891 filas
+2025-11-19 17:33:19,880 [INFO] sidpol: Filter_df: 332928 → 6891 filas aplicadas
+2025-11-19 17:33:19,881 [INFO] sidpol: Filtros aplicados: 6891 filas resultantes
+2025-11-19 17:33:19,899 [INFO] sidpol: by_modalidad ejecutado en 0.002s
+2025-11-19 17:33:19,916 [INFO] sidpol: monthly_trend ejecutado en 0.002s
+2025-11-19 17:33:19,933 [INFO] sidpol: top_departamentos ejecutado en 0.002s
+2025-11-19 17:33:19,951 [INFO] sidpol: Predicción generada para 3 meses
+2025-11-19 17:33:19,952 [INFO] sidpol: predict_monthly_trend ejecutado en 0.004s
+2025-11-19 17:33:19,955 [INFO] sidpol: monthly_trend ejecutado en 0.003s
+2025-11-19 17:33:19,980 [INFO] sidpol: calculate_growth_rate ejecutado en 0.003s
+2025-11-19 17:33:20,011 [INFO] sidpol: Matriz de correlación calculada
+2025-11-19 17:33:20,015 [ERROR] sidpol: Error correlación: "The following id_vars or value_vars are not present in the DataFrame: ['DEPARTAMENTO']"
+Traceback (most recent call last):
+  File "C:\Users\ferna\Documents\GitHub\Sidpol-Peru-Crime-Dashboard-Programacion-Avanzada-G1\project-root\src\app.py", line 471, in <module>
+    corr_flat = corr_matrix.reset_index().melt(id_vars="DEPARTAMENTO")
+  File "C:\Users\ferna\Documents\GitHub\Sidpol-Peru-Crime-Dashboard-Programacion-Avanzada-G1\project-root\.venv\Lib\site-packages\pandas\core\frame.py", line 9969, in melt
+    return melt(
+           ~~~~^
+        self,
+        ^^^^^
+    ...<5 lines>...
+        ignore_index=ignore_index,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).__finalize__(self, method="melt")
+    ^
+  File "C:\Users\ferna\Documents\GitHub\Sidpol-Peru-Crime-Dashboard-Programacion-Avanzada-G1\project-root\.venv\Lib\site-packages\pandas\core\reshape\melt.py", line 74, in melt
+    raise KeyError(
+    ...<2 lines>...
+    )
+KeyError: "The following id_vars or value_vars are not present in the DataFrame: ['DEPARTAMENTO']"
+2025-11-19 17:37:33,171 [INFO] sidpol: === Aplicación Streamlit iniciada ===
+2025-11-19 17:37:33,178 [INFO] sidpol: Esquema de BD creado/verificado
+2025-11-19 17:37:33,181 [DEBUG] sidpol: Consulta SQL ejecutada, 0 filas retornadas
+2025-11-19 17:37:33,192 [INFO] sidpol: Esquema de BD creado/verificado
+2025-11-19 17:37:33,194 [DEBUG] sidpol: Consulta SQL ejecutada, 4 filas retornadas
+2025-11-19 17:37:33,196 [INFO] sidpol: Esquema de BD creado/verificado
+2025-11-19 17:37:33,198 [DEBUG] sidpol: Consulta SQL ejecutada, 0 filas retornadas
+2025-11-19 17:37:33,204 [DEBUG] sidpol: Encontrados 1 archivos de datos
+2025-11-19 17:37:33,206 [DEBUG] sidpol: Archivo de datos más reciente: DATASET_Denuncias_Policiales_Enero 2018 a Setiembre 2025.csv
+2025-11-19 17:37:33,207 [INFO] sidpol: Esquema de BD creado/verificado
+2025-11-19 17:37:33,209 [DEBUG] sidpol: Consulta SQL ejecutada, 1 filas retornadas
+2025-11-19 17:37:33,209 [INFO] sidpol: obtener_estadisticas_generales ejecutado en 0.003s
+2025-11-19 17:37:33,211 [WARNING] sidpol: Error mostrando KPIs de BD: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+2025-11-19 17:37:33,394 [DEBUG] sidpol: Filtro año=2025: 34665 filas
+2025-11-19 17:37:33,403 [DEBUG] sidpol: Filtro modalidades=3: 6891 filas
+2025-11-19 17:37:33,405 [DEBUG] sidpol: Filtro meses=[1-12]: 6891 filas
+2025-11-19 17:37:33,405 [INFO] sidpol: Filter_df: 332928 → 6891 filas aplicadas
+2025-11-19 17:37:33,406 [INFO] sidpol: Filtros aplicados: 6891 filas resultantes
+2025-11-19 17:37:33,432 [INFO] sidpol: by_modalidad ejecutado en 0.003s
+2025-11-19 17:37:33,449 [INFO] sidpol: monthly_trend ejecutado en 0.002s
+2025-11-19 17:37:33,472 [INFO] sidpol: top_departamentos ejecutado en 0.005s
+2025-11-19 17:37:33,492 [INFO] sidpol: Predicción generada para 3 meses
+2025-11-19 17:37:33,493 [INFO] sidpol: predict_monthly_trend ejecutado en 0.004s
+2025-11-19 17:37:33,494 [INFO] sidpol: monthly_trend ejecutado en 0.001s
+2025-11-19 17:37:33,513 [INFO] sidpol: calculate_growth_rate ejecutado en 0.002s
+2025-11-19 17:37:33,543 [INFO] sidpol: Matriz de correlación calculada
+2025-11-19 17:37:33,547 [ERROR] sidpol: Error correlación: "The following id_vars or value_vars are not present in the DataFrame: ['DEPARTAMENTO']"
+Traceback (most recent call last):
+  File "C:\Users\ferna\Documents\GitHub\Sidpol-Peru-Crime-Dashboard-Programacion-Avanzada-G1\project-root\src\app.py", line 471, in <module>
+    corr_flat = corr_matrix.reset_index().melt(id_vars="DEPARTAMENTO")
+  File "C:\Users\ferna\Documents\GitHub\Sidpol-Peru-Crime-Dashboard-Programacion-Avanzada-G1\project-root\.venv\Lib\site-packages\pandas\core\frame.py", line 9969, in melt
+    return melt(
+           ~~~~^
+        self,
+        ^^^^^
+    ...<5 lines>...
+        ignore_index=ignore_index,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).__finalize__(self, method="melt")
+    ^
+  File "C:\Users\ferna\Documents\GitHub\Sidpol-Peru-Crime-Dashboard-Programacion-Avanzada-G1\project-root\.venv\Lib\site-packages\pandas\core\reshape\melt.py", line 74, in melt
+    raise KeyError(
+    ...<2 lines>...
+    )
+KeyError: "The following id_vars or value_vars are not present in the DataFrame: ['DEPARTAMENTO']"
