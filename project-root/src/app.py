@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import streamlit as st
 import pandas as pd
+import os
 
 from processing import (
     data_path,
@@ -15,7 +16,7 @@ from processing import (
     compute_kpis,
 )
 from viz import bar_modalidad, line_trend, bar_top_departamentos, heatmap_mod_mes
-
+from descargar_datos import actualizar_toda_la_data
 
 # Configuración de la página
 st.set_page_config(page_title="SIDPOL Perú - Prototipo", layout="wide")
@@ -76,7 +77,30 @@ else:
         df_f[display_cols].sort_values(["MES", "cantidad"], ascending=[True, False]),
         use_container_width=True,
     )
-
+# --- BARRA LATERAL (SIDEBAR) ---
+with st.sidebar:
+    st.header("Gestión de Datos")
+    st.write("Actualiza la base de datos directamente desde datosabiertos.gob.pe")
+    
+    if st.button("🔄 Actualizar Datos (Scraping)"):
+        with st.spinner("Conectando con datosabiertos.gob.pe y descargando archivos..."):
+            try:
+                # Llamamos a la función que creamos
+                resultados = actualizar_toda_la_data()
+                
+                # Mostramos resultados
+                for linea in resultados:
+                    if "Error" in linea or "Fallo" in linea:
+                        st.error(linea)
+                    else:
+                        st.success(linea)
+                
+                # Limpiamos la caché de Streamlit para que recargue los datos nuevos
+                st.cache_data.clear()
+                st.success("¡Datos actualizados! Por favor recarga la página si no ves los cambios.")
+                
+            except Exception as e:
+                st.error(f"Ocurrió un error crítico: {e}")
 # Gráficos
 col1, col2 = st.columns(2)
 with col1:
@@ -95,4 +119,5 @@ st.altair_chart(bar_top_departamentos(top_departamentos(df_f)), use_container_wi
 # st.altair_chart(heatmap_mod_mes(heatmap_modalidad_mes(df_f)), use_container_width=True)
 
 # Nota final de citación
+
 st.caption("Datos 2018–2025, cortes mensuales; procedencia y variables según diccionario y metadatos de SIDPOL/SIDPPOL – MININTER.")
