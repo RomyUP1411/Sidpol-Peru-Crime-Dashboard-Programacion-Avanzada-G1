@@ -48,7 +48,11 @@ with st.sidebar:
                 st.error(f"Ocurrio un error critico: {e}")
 
 
-df = load_data()
+try:
+    df = load_data()
+except FileNotFoundError as e:
+    st.error(f"No se encontró el CSV en data/: {e}")
+    st.stop()
 
 # Titulo y fuente/licencia
 st.title("Dashboard de denuncias policiales (SIDPOL) - Prototipo")

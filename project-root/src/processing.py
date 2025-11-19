@@ -6,15 +6,16 @@ from typing import Dict, List, Optional, Tuple
 import pandas as pd
 
 
-# Devuelve la ruta del CSV en data/; busca el nombre esperado o el primero que coincida
+# Devuelve la ruta del CSV en data/; toma el más reciente disponible
 def data_path() -> Path:
     data_dir = Path(__file__).resolve().parents[1] / "data"
-    exact = data_dir / "DATASET_Denuncias_Policiales_Enero 2018 a Setiembre 2025.csv"
-    if exact.exists():
-        return exact
-    for p in sorted(data_dir.glob("DATASET_Denuncias_Policiales*.csv")):
-        return p
-    raise FileNotFoundError("No se encontró el CSV en data/; verifica el nombre o ruta.")
+    candidates = sorted(
+        data_dir.glob("DATASET_Denuncias_Policiales*.csv"),
+        key=lambda p: p.stat().st_mtime,
+    )
+    if not candidates:
+        raise FileNotFoundError("No se encontró el CSV en data/. Usa el botón de scraping o coloca el archivo.")
+    return candidates[-1]
 
 
 def load_raw(path: Path) -> pd.DataFrame:
@@ -36,6 +37,7 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
         "ANIO": "ANO",
         "AÑO": "ANO",
         "A�'O": "ANO",
+        "A���'O": "ANO",
         "MES": "MES",
         "DPTOHECHONEW": "DEPARTAMENTO",
         "DPTO_HECHO_NEW": "DEPARTAMENTO",
