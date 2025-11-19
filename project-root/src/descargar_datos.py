@@ -1,71 +1,98 @@
 import requests
 import os
 from tqdm import tqdm
+from bs4 import BeautifulSoup  # Nueva librería para scraping
 
-# --- CONFIGURACIÓN DE LOS RECURSOS ---
-# NOTA IMPORTANTE: Los enlaces del Dataset y Metadato en el PDF original 
-# apuntan a la página web, no al archivo directo.
-# Debes verificar si necesitas actualizarlos con el enlace directo (.zip o .csv).
-
+# --- CONFIGURACIÓN DE LOS RECURSOS (URLs PERMANENTES) ---
 RECURSOS = {
-    # 1. Diccionario de datos
     "Diccionario_Policiales": {
-        "url": "https://www.datosabiertos.gob.pe/sites/default/files/DICCIONARIO_DATOS_Denuncias_Policiales.xlsx",
-        "filename": "Diccionario_Denuncias_Policiales.xlsx"
+        "page_url": "https://www.datosabiertos.gob.pe/dataset/denuncias-policiales/resource/4622d148-94ff-4561-aeb4-11cf273ffdbe",
+        "filename": "DICCIONARIO_DATOS_Denuncias_Policiales.xlsx" # O .csv según lo que baje
     },
-    # 2. DataSet Denuncias Policiales (Verifica este enlace)
     "DataSet_2018_2025": {
-        # URL de la página del recurso según el PDF (puede requerir cambio por el link directo al .zip)
-        "url": "https://www.datosabiertos.gob.pe/dataset/denuncias-policiales/resource/4622d148-94ff-4561-aeb4-11cf273ffdbe" 
+        "page_url": "https://www.datosabiertos.gob.pe/dataset/denuncias-policiales/resource/64c01d53-4402-4e5a-936a-4bce5b3d1008",
+        "filename": "DATASET_Denuncias_Policiales.csv" # Nombre genérico para facilitar la carga
     },
-    # 3. Metadato (Verifica este enlace)
     "Metadato_Octubre_2025": {
-        "url": "https://www.datosabiertos.gob.pe/dataset/denuncias-policiales/resource/4622d148-94ff-4561-aeb4-11cf273ffdbe"
+        "page_url": "https://www.datosabiertos.gob.pe/dataset/denuncias-policiales/resource/83c992fc-145c-4916-8dac-ad39fad9d000",
+        "filename": "METADATO_Denuncias_Policiales.docx"
     }
 }
 
-# Directorio donde se guardarán los archivos
-DOWNLOAD_DIR = "datos_policiales"
+DOWNLOAD_DIR = "project-root/data" # Asegúrate que coincida con tu estructura
 
-# --- FUNCIÓN DE DESCARGA ---
-def download_file(url, filename):
-    """Descarga un archivo grande con barra de progreso (streaming)."""
-    filepath = os.path.join(DOWNLOAD_DIR, filename)
-    print(f"[{filename}] Iniciando descarga desde: {url}")
+def obtener_url_descarga_real(page_url):
+    """
+    Entra a la página del recurso y busca el botón de descarga real.
+    El portal de datos de Perú usa CKAN, el botón suele tener la clase 'resource-url-analytics'.
+    """
+    try:
+        print(f"   Refrescando enlace desde: {page_url}...")
+        response = requests.get(page_url, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Estrategia 1: Buscar por la clase específica de CKAN (la plataforma que usa gob.pe)
+        boton = soup.find('a', class_='resource-url-analytics')
+        
+        # Estrategia 2: Si falla, buscar un link que diga "Descargar"
+        if not boton:
+            boton = soup.find('a', string="Descargar")
+            
+        if boton and 'href' in boton.attrs:
+            return boton['href']
+        else:
+            raise Exception("No se encontró el botón de descarga en el HTML.")
+            
+    except Exception as e:
+        print(f"   Error al hacer scraping de la URL: {e}")
+        return None
+
+def download_file(url, filename, folder):
+    filepath = os.path.join(folder, filename)
     
     try:
         # Usamos stream=True para descargar eficientemente
-        response = requests.get(url, stream=True, timeout=30)
-        response.raise_for_status() # Error si el link no funciona (404, 500)
+        response = requests.get(url, stream=True, timeout=60)
+        response.raise_for_status()
         
         total_size = int(response.headers.get('content-length', 0))
-        block_size = 1024 # 1 KB
         
         with open(filepath, 'wb') as file:
-            with tqdm(total=total_size, unit='iB', unit_scale=True, desc=filename) as progress_bar:
-                for data in response.iter_content(block_size):
-                    progress_bar.update(len(data))
-                    file.write(data)
+            # Si streamlit está corriendo, no veremos la barra tqdm en la consola, 
+            # pero no afecta la funcionalidad.
+            for data in response.iter_content(1024):
+                file.write(data)
                     
-        print(f"[{filename}] ✓ ¡Descarga completada y guardada en: {filepath}!")
+        return True, f"Descargado: {filename}"
         
-    except requests.exceptions.RequestException as e:
-        print(f"[{filename}] X ERROR al descargar {url}: {e}")
-        print(" - Sugerencia: El enlace directo puede haber cambiado. Verifica la URL.")
     except Exception as e:
-        print(f"[{filename}] Ocurrió un error inesperado: {e}")
+        return False, f"Error descargando {filename}: {str(e)}"
 
-# --- EJECUCIÓN PRINCIPAL ---
-if __name__ == "__main__":
-    # 1. Crear directorio si no existe
+def actualizar_toda_la_data():
+    """Función principal para ser llamada desde Streamlit"""
     if not os.path.exists(DOWNLOAD_DIR):
         os.makedirs(DOWNLOAD_DIR)
-        print(f"Directorio '{DOWNLOAD_DIR}' creado.")
+    
+    reporte = []
+    
+    for key, info in RECURSOS.items():
+        # 1. Obtener URL real (Scraping)
+        real_url = obtener_url_descarga_real(info["page_url"])
         
-    # 2. Iterar y descargar cada recurso
-    for name, data in RECURSOS.items():
-        download_file(data["url"], data["filename"])
-        
-    print("-" * 50)
+        if real_url:
+            # 2. Descargar
+            success, msg = download_file(real_url, info["filename"], DOWNLOAD_DIR)
+            reporte.append(msg)
+        else:
+            reporte.append(f"Fallo al obtener enlace para {key}")
+            
+    return reporte
 
-    print(f"Proceso finalizado. Revisa el directorio '{DOWNLOAD_DIR}'.")
+# Bloque para probarlo individualmente
+if __name__ == "__main__":
+    print("Iniciando actualización manual...")
+    resultados = actualizar_toda_la_data()
+    for r in resultados:
+        print(r)
