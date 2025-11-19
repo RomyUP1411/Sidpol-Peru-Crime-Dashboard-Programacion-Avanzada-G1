@@ -1,8 +1,9 @@
 import glob
 import os
-import time
-from urllib.parse import urljoin
 import re
+import time
+from typing import Optional
+from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
