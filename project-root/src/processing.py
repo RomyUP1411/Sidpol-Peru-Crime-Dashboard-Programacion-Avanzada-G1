@@ -1,9 +1,31 @@
 from pathlib import Path
 import pandas as pd
 
-# Devuelve la ruta absoluta del CSV en la carpeta data/ usando la ubicación de este archivo
+
+# Devuelve la ruta absoluta del CSV en la carpeta data/ usando la ubicación de este archivo.
+# Lógica: si hay uno o más archivos que empiecen por
+# "DATASET_Denuncias_Policiales" en la carpeta `data/`, devuelve el más reciente
+# (por fecha de modificación). Si no encuentra ninguno, devuelve la ruta
+# histórica de septiembre como fallback y, en última instancia, la ruta
+# esperada para el CSV de octubre (para cuando se descargue).
 def data_path() -> Path:
-    return Path(__file__).resolve().parents[1] / "data" / "DATASET_Denuncias_Policiales_Enero 2018 a Setiembre 2025.csv"
+    data_dir = Path(__file__).resolve().parents[1] / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    # Buscar archivos que coincidan con el prefijo del dataset
+    candidates = list(data_dir.glob("DATASET_Denuncias_Policiales*.csv"))
+    if candidates:
+        # Devolver el más reciente (por modificación)
+        latest = max(candidates, key=lambda p: p.stat().st_mtime)
+        return latest
+
+    # Nombre histórico presente en el repo (septiembre)
+    sept_path = data_dir / "DATASET_Denuncias_Policiales_Enero 2018 a Setiembre 2025.csv"
+    if sept_path.exists():
+        return sept_path
+
+    # Nombre esperado cuando se descargue la versión más nueva (octubre)
+    return data_dir / "DATASET_Denuncias_Policiales_Enero_2018_a_Octubre_2025.csv"
 
 # Lee el CSV original con los nombres de columnas del recurso oficial
 def load_raw(path: Path) -> pd.DataFrame:
