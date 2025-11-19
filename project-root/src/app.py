@@ -59,9 +59,10 @@ with col_db2:
         try:
             stats, exito = obtener_estadisticas_generales()
             if exito and not stats.empty:
-                st.metric("Años en BD", int(stats.iloc['años']))
-                st.metric("Departamentos", int(stats.iloc['departamentos']))
-                st.metric("Total Denuncias", int(stats.iloc['total_denuncias']))
+                row = stats.iloc[0]
+                st.metric("Años en BD", int(row['años']))
+                st.metric("Departamentos", int(row['departamentos']))
+                st.metric("Total Denuncias", int(row['total_denuncias']))
             else:
                 st.warning("Carga datos a la BD primero")
         except Exception as e:
@@ -127,6 +128,19 @@ def load_data() -> pd.DataFrame:
 
 
 df = load_data()
+
+# Mostrar información del archivo de datos que se está usando (nombre y fecha de modificación)
+try:
+    dp = data_path()
+    if dp.exists():
+        mtime = dp.stat().st_mtime
+        import datetime
+        ts = datetime.datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
+        st.caption(f"Archivo de datos en uso: `{dp.name}` — modificado: {ts}")
+    else:
+        st.caption(f"Archivo de datos esperado: `{dp.name}` (no existe aún)")
+except Exception:
+    pass
 
 
 # Controles (≥3): año, modalidades, departamento, provincia dependiente, rango de meses
