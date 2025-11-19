@@ -1,19 +1,21 @@
+from __future__ import annotations
+
 import glob
 import os
-import re
 import time
-from typing import Optional
 from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-# Suprimir advertencias de SSL (el portal a veces presenta certificados problemáticos)
+# Suprimir advertencias de SSL (el portal a menudo presenta problemas de certificado)
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 # --- CONFIGURACIÓN ---
-URL_DATASET_PAGE = "https://www.datosabiertos.gob.pe/node/21805"
+URL_RESOURCE_PAGE = "https://www.datosabiertos.gob.pe/dataset/denuncias-policiales/resource/64c01d53-4402-4e5a-936a-4bce5b3d1008"
+CSS_DOWNLOAD_BUTTON = "#main > div > section > ul > li:nth-child(4) > a"
+DOWNLOAD_PATH_FRAGMENT = "/node/21805/download"
 FILENAME_FALLBACK = "DATASET_Denuncias_Policiales.csv"
 
 # Rutas dinámicas
@@ -21,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 
 # Headers para simular navegador real
-headers = {
+HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -30,76 +32,27 @@ headers = {
 }
 
 
-def _month_from_text(text: str) -> Optional[int]:
-    meses = {
-        "enero": 1,
-        "febrero": 2,
-        "marzo": 3,
-        "abril": 4,
-        "mayo": 5,
-        "junio": 6,
-        "julio": 7,
-        "agosto": 8,
-        "setiembre": 9,
-        "septiembre": 9,
-        "octubre": 10,
-        "noviembre": 11,
-        "diciembre": 12,
-    }
-    lower = text.lower()
-    for k, v in meses.items():
-        if k in lower:
-            return v
-    return None
-
-
-def _score_link(a_tag) -> tuple:
-    """Devuelve una tupla de score para ordenar los enlaces de CSV."""
-    href = a_tag.get("href", "")
-    text = a_tag.get_text(" ")
-    candidate = href + " " + text
-
-    # Extraer año (primer 4 dígitos que parezca año)
-    year_match = re.search(r"(20\d{2})", candidate)
-    year = int(year_match.group(1)) if year_match else 0
-
-    # Extraer mes por nombre
-    month = _month_from_text(candidate) or 0
-
-    # Longitud del href como desempate (prefiere rutas más largas/precisas)
-    href_len = len(href)
-
-    return (year, month, href_len)
-
-
-def _find_best_csv_url(session: requests.Session) -> str:
-    """
-    Busca todos los enlaces a CSV en la página y elige el que parezca más nuevo
-    (por año/mes en el texto o href). Si no hay fechas, usa el primero.
-    """
-    resp = session.get(URL_DATASET_PAGE, headers=headers, timeout=30, verify=False)
+def _find_download_url(session: requests.Session) -> str:
+    """Encuentra el enlace real de descarga dentro de la página del recurso."""
+    resp = session.get(URL_RESOURCE_PAGE, headers=HEADERS, timeout=30, verify=False)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
-    links = soup.find_all("a", href=lambda h: h and ".csv" in h.lower())
-    if not links:
-        raise RuntimeError("No se encontró enlace CSV en la página del dataset")
 
-    # Ordenar por score descendente (año, mes, longitud de href)
-    links_sorted = sorted(links, key=_score_link, reverse=True)
-    best = links_sorted[0]
-    href = best.get("href")
-    if not href:
-        raise RuntimeError("No se obtuvo href del enlace CSV")
-    return urljoin(URL_DATASET_PAGE, href)
+    tag = soup.select_one(CSS_DOWNLOAD_BUTTON)
+    if not tag or not tag.get("href"):
+        tag = soup.find("a", href=lambda h: h and DOWNLOAD_PATH_FRAGMENT in h)
+
+    if not tag or not tag.get("href"):
+        raise RuntimeError("No se encontró el botón de descarga en la página del recurso.")
+    return urljoin(URL_RESOURCE_PAGE, tag["href"])
 
 
 def _nombre_archivo_final(resp: requests.Response) -> str:
-    """Obtiene nombre desde Content-Disposition si viene; si no, usa fallback."""
+    """Obtiene el nombre de archivo desde Content-Disposition si viene; si no, usa fallback."""
     cd = resp.headers.get("content-disposition", "")
     if "filename=" in cd:
-        parte = cd.split("filename=")[-1]
-        nombre = parte.strip('";\' ')
-        return nombre or FILENAME_FALLBACK
+        parte = cd.split("filename=")[-1].strip('";\' ')
+        return parte or FILENAME_FALLBACK
     return FILENAME_FALLBACK
 
 
@@ -117,10 +70,10 @@ def actualizar_toda_la_data():
 
     try:
         with requests.Session() as session:
-            csv_url = _find_best_csv_url(session)
+            csv_url = _find_download_url(session)
             print(f"Descargando desde: {csv_url}")
 
-            with session.get(csv_url, headers=headers, stream=True, timeout=120, verify=False) as r:
+            with session.get(csv_url, headers=HEADERS, stream=True, timeout=120, verify=False) as r:
                 r.raise_for_status()
                 ruta_final = os.path.join(DATA_DIR, _nombre_archivo_final(r))
 
@@ -133,7 +86,6 @@ def actualizar_toda_la_data():
 
         print(f"Descarga temporal completada ({downloaded_size / 1024 / 1024:.2f} MB)")
 
-        # Reemplazo seguro: eliminar CSVs antiguos que coincidan con el patrón
         patron = os.path.join(DATA_DIR, "DATASET_Denuncias_Policiales*.csv")
         archivos_antiguos = glob.glob(patron)
         for fpath in archivos_antiguos:

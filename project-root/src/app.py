@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import sqlite3
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
 
@@ -27,7 +30,26 @@ def load_data() -> pd.DataFrame:
     return clean(load_raw(data_path()))
 
 
+DB_PATH = Path(__file__).resolve().parents[1] / "data" / "denuncias.db"
+
+
+@st.cache_data(show_spinner=False)
+def list_sql_tables(db_path: Path) -> list[str]:
+    if not db_path.exists():
+        return []
+    with sqlite3.connect(db_path) as con:
+        rows = con.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").fetchall()
+    return [r[0] for r in rows]
+
+
+@st.cache_data(show_spinner=False)
+def load_sql_table(db_path: Path, table: str) -> pd.DataFrame:
+    with sqlite3.connect(db_path) as con:
+        return pd.read_sql(f"SELECT * FROM {table}", con)
+
+
 # --- Barra lateral: actualizar datos ---
+selected_sql_table: str | None = None
 with st.sidebar:
     st.header("Gestion de Datos")
     st.write("Actualiza la base de datos directamente desde datosabiertos.gob.pe")
@@ -46,6 +68,20 @@ with st.sidebar:
                 st.experimental_rerun()
             except Exception as e:
                 st.error(f"Ocurrio un error critico: {e}")
+
+    st.divider()
+    st.subheader("Tablas SQL (scraping)")
+    if not DB_PATH.exists():
+        st.info("No se encontró data/denuncias.db. Ejecuta `python src/scrape_and_load.py` para generarla.")
+    else:
+        tables = list_sql_tables(DB_PATH)
+        if not tables:
+            st.warning("La base SQLite existe pero no tiene tablas.")
+        else:
+            options = ["-- Selecciona una tabla --"] + tables
+            choice = st.selectbox("Tablas disponibles", options, index=0)
+            if choice != options[0]:
+                selected_sql_table = choice
 
 
 try:
@@ -119,5 +155,16 @@ st.altair_chart(bar_top_departamentos(top_departamentos(df_f)), use_container_wi
 # Alternativa: heatmap en vez de top
 # st.subheader("Modalidad vs Mes (heatmap)")
 # st.altair_chart(heatmap_mod_mes(heatmap_modalidad_mes(df_f)), use_container_width=True)
+
+if selected_sql_table:
+    st.subheader(f"Vista SQL: {selected_sql_table}")
+    try:
+        df_sql = load_sql_table(DB_PATH, selected_sql_table)
+        if df_sql.empty:
+            st.info("La tabla seleccionada está vacía.")
+        else:
+            st.dataframe(df_sql.head(500), use_container_width=True)
+    except sqlite3.Error as err:
+        st.error(f"No se pudo leer la tabla {selected_sql_table}: {err}")
 
 st.caption("Datos 2018-2025, cortes mensuales; procedencia y variables segun diccionario y metadatos de SIDPOL/SIDPPOL - MININTER.")
