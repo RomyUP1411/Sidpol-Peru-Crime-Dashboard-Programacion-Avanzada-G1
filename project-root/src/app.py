@@ -144,6 +144,43 @@ with tab_tabla:
 
 st.divider()
 
+st.subheader("Tablas creadas y vista JOIN")
+try:
+    tablas_df, ok_tablas = consultar_bd(
+        "SELECT name AS tabla FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+    )
+    if ok_tablas and tablas_df is not None and not tablas_df.empty:
+        st.dataframe(tablas_df, use_container_width=True)
+        table_names = tablas_df["tabla"].tolist()
+        selected_table = st.selectbox("Ver tabla individual", options=table_names)
+        if selected_table:
+            try:
+                data_df, ok_data = consultar_bd(f"SELECT * FROM {selected_table} LIMIT 500")
+                if ok_data and data_df is not None:
+                    st.dataframe(data_df, use_container_width=True)
+                    st.caption(f"Mostrando hasta 500 filas de `{selected_table}`.")
+                else:
+                    st.warning("Sin datos para la tabla seleccionada.")
+            except Exception as e:
+                st.error(f"No se pudo mostrar la tabla {selected_table}: {e}")
+    else:
+        st.info("Aún no hay tablas registradas. Carga datos a la BD para verlas aquí.")
+except Exception as e:
+    st.error(f"No se pudieron listar las tablas: {e}")
+
+if st.button("Mostrar JOIN de todas las tablas", key="join_full_btn"):
+    try:
+        join_df, ok_join = obtener_denuncias_join(limite=300)
+        if ok_join and join_df is not None and not join_df.empty:
+            st.dataframe(join_df, use_container_width=True)
+            st.caption("Vista combinada de denuncias, departamentos, modalidades y fuente.")
+        else:
+            st.warning("No existen registros combinados para mostrar.")
+    except Exception as e:
+        st.error(f"Error obteniendo el JOIN: {e}")
+
+st.divider()
+
 
 # ====== RESTO DE LA APP (CÓDIGO ORIGINAL) ======
 # Carga de datos parametrizada (caché por ruta)
