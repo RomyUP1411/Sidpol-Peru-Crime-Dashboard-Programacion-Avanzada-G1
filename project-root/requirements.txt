@@ -3,3 +3,6 @@ pandas>=2.2
 altair>=5.3
 pyarrow>=16.0
 beautifulsoup4
+requests       
+tqdm          
+openpyxl    
