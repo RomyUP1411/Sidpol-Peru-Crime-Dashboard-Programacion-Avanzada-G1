@@ -12,11 +12,25 @@ from database import (
     obtener_denuncias_por_modalidad,
     obtener_denuncias_por_departamento,
     obtener_tabla_completa,
-    obtener_estadisticas_generales
+    obtener_estadisticas_generales,
+    obtener_denuncias_join,
 )
 
 # Configuración básica de la página
 st.set_page_config(page_title="SIDPOL Perú - Prototipo", layout="wide")
+
+# --- Login simple: guardar nombre temporalmente en sesión ---
+if "user_name" not in st.session_state:
+    st.session_state["user_name"] = "X"
+
+with st.sidebar.expander("Usuario / Login", expanded=False):
+    name_input = st.text_input("Nombre", value=st.session_state.get("user_name", "X"))
+    if st.button("Iniciar sesión", key="login_btn"):
+        st.session_state["user_name"] = name_input.strip() if name_input.strip() else "X"
+        st.success(f"Sesión iniciada como {st.session_state['user_name']}")
+
+# Mostrar usuario en la app
+st.caption(f"Usuario actual: `{st.session_state.get('user_name', 'X')}`")
 
 
 # ====== SECCIÓN DE DESCARGA CSV ======
@@ -106,6 +120,16 @@ with tab_consultas:
         except Exception as e:
             st.error(f"Error SQL: {e}")
 
+    if st.button("🔗 Mostrar ejemplo JOIN (denuncias con departamento y modalidad)"):
+        try:
+            jtab, ok = obtener_denuncias_join(limite=200)
+            if ok and jtab is not None:
+                st.dataframe(jtab, use_container_width=True)
+            else:
+                st.warning("No hay datos o carga la BD primero")
+        except Exception as e:
+            st.error(f"Error mostrando JOIN: {e}")
+
 with tab_tabla:
     if st.button("Cargar tabla completa desde BD"):
         try:
@@ -146,6 +170,18 @@ try:
         st.caption(f"Archivo de datos seleccionado: `{dp.name}` — modificado: {ts}")
     else:
         st.caption(f"Archivo de datos seleccionado: `{dp.name}` (no existe aún)")
+except Exception:
+    pass
+
+# KPIs desde la base de datos (si hay datos)
+try:
+    stats_df, ok = obtener_estadisticas_generales()
+    if ok and stats_df is not None and not stats_df.empty:
+        row = stats_df.iloc[0]
+        k1, k2, k3 = st.columns(3)
+        k1.metric("Años en BD", int(row["años"]))
+        k2.metric("Departamentos", int(row["departamentos"]))
+        k3.metric("Total denuncias (BD)", int(row["total_denuncias"]))
 except Exception:
     pass
 
