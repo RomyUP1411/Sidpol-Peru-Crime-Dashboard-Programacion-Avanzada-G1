@@ -5,6 +5,8 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
+TARGET_YEAR = 2018
+
 
 # Devuelve la ruta del CSV en data/; toma el más reciente disponible
 def data_path() -> Path:
@@ -26,6 +28,17 @@ def load_raw(path: Path) -> pd.DataFrame:
 def _normalize_cols(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df.columns = [c.strip() for c in df.columns]
+    return df
+
+
+def _restrict_reference_period(df: pd.DataFrame, year: int = TARGET_YEAR) -> pd.DataFrame:
+    """Recorta el DataFrame al a�?�o/mes requerido por la entrega (enero-diciembre 2018)."""
+    if "ANO" not in df.columns:
+        return df
+
+    df = df[df["ANO"] == year]
+    if "MES" in df.columns:
+        df = df[(df["MES"] >= 1) & (df["MES"] <= 12)]
     return df
 
 
@@ -72,6 +85,8 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
     req = [c for c in ["ANO", "MES"] if c in df.columns]
     if req:
         df = df.dropna(subset=req)
+
+    df = _restrict_reference_period(df)
 
     return df
 
