@@ -18,7 +18,8 @@ if st.button("Descargar/Actualizar CSV desde datosabiertos.gob.pe"):
     try:
         output_path = download_csv()
         st.success(f"Descarga completada: {output_path.name}")
-        st.rerun()  # <-- Esto fuerza recarga para que lea el CSV actualizado
+        st.cache_data.clear()  # ← NUEVA LÍNEA: Limpia el cache
+        st.rerun()  # Recarga la app
     except Exception as e:
         st.error(f"Ocurrió un error durante la descarga: {e}")
 else:
