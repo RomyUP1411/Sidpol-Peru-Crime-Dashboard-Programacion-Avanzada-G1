@@ -4,6 +4,8 @@ import time
 import hashlib
 import json
 from datetime import datetime
+import processing
+import pandas as pd
 
 
 def download_csv(
@@ -53,6 +55,49 @@ def download_csv(
             }
             with open(metadata_file, "w", encoding="utf-8") as mf:
                 json.dump(meta, mf, ensure_ascii=False, indent=2)
+
+            # Intentar validar/estandarizar columnas del CSV descargado
+            try:
+                # Leer con las mismas funciones de processing para garantizar nombres esperados
+                try:
+                    raw = processing.load_raw(output_file)
+                except Exception:
+                    raw = pd.read_csv(output_file, encoding="latin1")
+
+                # Columnas esperadas en el raw antes de clean
+                expected_raw = {"ANIO", "MES", "DPTO_HECHO_NEW", "PROV_HECHO", "DIST_HECHO", "P_MODALIDADES", "cantidad"}
+                cols = set(raw.columns.str.upper())
+
+                if not expected_raw.issubset(cols):
+                    # Intentar mapear columnas por palabras clave
+                    rename_map = {}
+                    for c in raw.columns:
+                        cu = c.upper()
+                        if "ANIO" in cu or "AÑO" in cu:
+                            rename_map[c] = "ANIO"
+                        elif "MES" in cu:
+                            rename_map[c] = "MES"
+                        elif "DEPARTA" in cu or "DPTO" in cu or "DEPARTAMENTO" in cu:
+                            rename_map[c] = "DPTO_HECHO_NEW"
+                        elif "PROV" in cu:
+                            rename_map[c] = "PROV_HECHO"
+                        elif "DIST" in cu:
+                            rename_map[c] = "DIST_HECHO"
+                        elif "MODAL" in cu:
+                            rename_map[c] = "P_MODALIDADES"
+                        elif "CANT" in cu or "CANTIDAD" in cu:
+                            rename_map[c] = "cantidad"
+
+                    if rename_map:
+                        raw = raw.rename(columns=rename_map)
+                        # Guardar el CSV estandarizado (sobrescribir)
+                        raw.to_csv(output_file, index=False, encoding="utf-8")
+                        meta["columns_standardized"] = True
+                        with open(metadata_file, "w", encoding="utf-8") as mf:
+                            json.dump(meta, mf, ensure_ascii=False, indent=2)
+            except Exception:
+                # No crítico; continuar
+                pass
 
             print(f"✓ Descarga completada: {output_file}")
             print(f"✓ Tamaño: {size / (1024*1024):.2f} MB")
