@@ -2,6 +2,7 @@ import glob
 import os
 import time
 from urllib.parse import urljoin
+import re
 
 import requests
 from bs4 import BeautifulSoup
@@ -28,15 +29,67 @@ headers = {
 }
 
 
-def _find_csv_url(session: requests.Session) -> str:
-    """Encuentra el primer enlace a CSV en la página del dataset."""
+def _month_from_text(text: str) -> Optional[int]:
+    meses = {
+        "enero": 1,
+        "febrero": 2,
+        "marzo": 3,
+        "abril": 4,
+        "mayo": 5,
+        "junio": 6,
+        "julio": 7,
+        "agosto": 8,
+        "setiembre": 9,
+        "septiembre": 9,
+        "octubre": 10,
+        "noviembre": 11,
+        "diciembre": 12,
+    }
+    lower = text.lower()
+    for k, v in meses.items():
+        if k in lower:
+            return v
+    return None
+
+
+def _score_link(a_tag) -> tuple:
+    """Devuelve una tupla de score para ordenar los enlaces de CSV."""
+    href = a_tag.get("href", "")
+    text = a_tag.get_text(" ")
+    candidate = href + " " + text
+
+    # Extraer año (primer 4 dígitos que parezca año)
+    year_match = re.search(r"(20\d{2})", candidate)
+    year = int(year_match.group(1)) if year_match else 0
+
+    # Extraer mes por nombre
+    month = _month_from_text(candidate) or 0
+
+    # Longitud del href como desempate (prefiere rutas más largas/precisas)
+    href_len = len(href)
+
+    return (year, month, href_len)
+
+
+def _find_best_csv_url(session: requests.Session) -> str:
+    """
+    Busca todos los enlaces a CSV en la página y elige el que parezca más nuevo
+    (por año/mes en el texto o href). Si no hay fechas, usa el primero.
+    """
     resp = session.get(URL_DATASET_PAGE, headers=headers, timeout=30, verify=False)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
-    link = soup.find("a", href=lambda h: h and ".csv" in h)
-    if not link or not link.get("href"):
+    links = soup.find_all("a", href=lambda h: h and ".csv" in h.lower())
+    if not links:
         raise RuntimeError("No se encontró enlace CSV en la página del dataset")
-    return urljoin(URL_DATASET_PAGE, link["href"])
+
+    # Ordenar por score descendente (año, mes, longitud de href)
+    links_sorted = sorted(links, key=_score_link, reverse=True)
+    best = links_sorted[0]
+    href = best.get("href")
+    if not href:
+        raise RuntimeError("No se obtuvo href del enlace CSV")
+    return urljoin(URL_DATASET_PAGE, href)
 
 
 def _nombre_archivo_final(resp: requests.Response) -> str:
@@ -63,7 +116,7 @@ def actualizar_toda_la_data():
 
     try:
         with requests.Session() as session:
-            csv_url = _find_csv_url(session)
+            csv_url = _find_best_csv_url(session)
             print(f"Descargando desde: {csv_url}")
 
             with session.get(csv_url, headers=headers, stream=True, timeout=120, verify=False) as r:
