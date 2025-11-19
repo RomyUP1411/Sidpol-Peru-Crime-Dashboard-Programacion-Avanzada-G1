@@ -6,15 +6,15 @@ from bs4 import BeautifulSoup  # Nueva librería para scraping
 # --- CONFIGURACIÓN DE LOS RECURSOS (URLs PERMANENTES) ---
 RECURSOS = {
     "Diccionario_Policiales": {
-        "page_url": "https://www.datosabiertos.gob.pe/dataset/denuncias-policiales/resource/4622d148-94ff-4561-aeb4-11cf273ffdbe",
+        "page_url": "https://www.datosabiertos.gob.pe/node/21806/download",
         "filename": "DICCIONARIO_DATOS_Denuncias_Policiales.xlsx" # O .csv según lo que baje
     },
     "DataSet_2018_2025": {
-        "page_url": "https://www.datosabiertos.gob.pe/dataset/denuncias-policiales/resource/64c01d53-4402-4e5a-936a-4bce5b3d1008",
+        "page_url": "https://www.datosabiertos.gob.pe/node/21805/download",
         "filename": "DATASET_Denuncias_Policiales_Enero 2018 a Octubre 2025.csv" # Nombre genérico para facilitar la carga
     },
     "Metadato_Octubre_2025": {
-        "page_url": "https://www.datosabiertos.gob.pe/dataset/denuncias-policiales/resource/83c992fc-145c-4916-8dac-ad39fad9d000",
+        "page_url": "https://www.datosabiertos.gob.pe/node/21807/download",
         "filename": "METADATO_Denuncias_Policiales_Oct. 2025.docx"
     }
 }
@@ -96,4 +96,5 @@ if __name__ == "__main__":
     resultados = actualizar_toda_la_data()
     for r in resultados:
         print(r)
+
 
