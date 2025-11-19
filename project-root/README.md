@@ -3,7 +3,7 @@
 Prototipo en Streamlit para explorar denuncias policiales del Perú a partir de un CSV con limpieza básica, filtros y visualizaciones descriptivas, correspondiente a la entrega parcial del curso Programación Avanzada en Ciencia de Datos.
 
 ## ¿Qué hace?
-- Carga el CSV local de denuncias (enero–diciembre 2018), tipifica columnas y renombra encabezados para una visualización legible en la interfaz.
+- Carga el CSV local de denuncias (enero–diciembre 2018 2025), tipifica columnas y renombra encabezados para una visualización legible en la interfaz.
 - Permite filtrar por Año, Modalidades, Departamento, Provincia y rango de Mes, mostrando tabla y gráficos interactivos.
 - Incluye tres visualizaciones: barras por modalidad, tendencia mensual y top 10 departamentos, con paleta fija por modalidad.
 - El alcance actual usa únicamente `src/app.py`, `src/processing.py` y `src/viz.py`; no hay scraping ni base SQLite.
