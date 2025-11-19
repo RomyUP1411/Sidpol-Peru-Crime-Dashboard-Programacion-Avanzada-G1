@@ -125,6 +125,25 @@ def monthly_trend(df: pd.DataFrame) -> pd.DataFrame:
         .sort_values("MES")
     )
 
+def data_path() -> Path:
+    data_dir = Path(__file__).resolve().parents[1] / "data"
+    
+    # 1. Prioridad: El archivo estandarizado que descarga nuestro script
+    nuevo_estandar = data_dir / "DATASET_Denuncias_Policiales.csv"
+    if nuevo_estandar.exists():
+        return nuevo_estandar
+        
+    # 2. Fallback: Busca el nombre antiguo específico (si no se ha actualizado aún)
+    antiguo_exacto = data_dir / "DATASET_Denuncias_Policiales_Enero 2018 a Setiembre 2025.csv"
+    if antiguo_exacto.exists():
+        return antiguo_exacto
+
+    # 3. Último recurso: Cualquier CSV que empiece con el patrón
+    for p in sorted(data_dir.glob("DATASET_Denuncias_Policiales*.csv")):
+        return p
+        
+    raise FileNotFoundError("No se encontró el CSV en data/; verifica haber ejecutado la actualización.")
+
 
 def top_departamentos(df: pd.DataFrame, n: int = 10) -> pd.DataFrame:
     if df.empty or "DEPARTAMENTO" not in df.columns:
@@ -180,4 +199,5 @@ def compute_kpis(df: pd.DataFrame) -> Dict[str, object]:
         "var_pct": round(var_pct, 2),
         "top_modalidad": top_modalidad,
         "top_departamento": top_departamento,
+
     }
