@@ -10,6 +10,20 @@ from viz import bar_modalidad, line_trend, bar_top_departamentos, heatmap_mod_me
 # Configuración básica de la página
 st.set_page_config(page_title="SIDPOL Perú - Prototipo", layout="wide")
 
+from download_data import download_csv
+
+st.set_page_config(page_title="SIDPOL Perú - Prototipo", layout="wide")
+
+if st.button("Descargar/Actualizar CSV desde datosabiertos.gob.pe"):
+    try:
+        output_path = download_csv()
+        st.success(f"Descarga completada: {output_path.name}")
+        st.rerun()  # <-- Esto fuerza recarga para que lea el CSV actualizado
+    except Exception as e:
+        st.error(f"Ocurrió un error durante la descarga: {e}")
+else:
+    st.info("Haz clic en el botón para obtener el CSV actualizado desde la fuente oficial.")
+
 # Carga de datos con caché para agilizar la experiencia
 @st.cache_data(show_spinner=False)
 def load_data() -> pd.DataFrame:
