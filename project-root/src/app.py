@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from processing import (
-    data_path, load_raw, clean, filter_df,
+    data_path, list_data_files, load_raw, clean, filter_df,
     by_modalidad, monthly_trend, top_departamentos, heatmap_modalidad_mes
 )
 from viz import bar_modalidad, line_trend, bar_top_departamentos, heatmap_mod_mes
@@ -44,7 +44,8 @@ col_db1, col_db2, col_db3 = st.columns(3)
 with col_db1:
     if st.button("💾 Cargar CSV a Base de Datos"):
         try:
-            filas, exito = cargar_csv_a_bd("data/DATASET_Denuncias_Policiales_Enero_2018_a_Octubre_2025.csv")
+            csv_to_load = data_path()
+            filas, exito = cargar_csv_a_bd(str(csv_to_load))
             if exito:
                 st.success(f"✓ {filas} registros cargados a la BD SQLite")
             else:
@@ -121,26 +122,42 @@ st.divider()
 
 
 # ====== RESTO DE LA APP (CÓDIGO ORIGINAL) ======
-# Carga de datos con caché para agilizar la experiencia
+# Carga de datos parametrizada (caché por ruta)
 @st.cache_data(show_spinner=False)
-def load_data() -> pd.DataFrame:
-    return clean(load_raw(data_path()))
+def load_data(path_str: str) -> pd.DataFrame:
+    from pathlib import Path
+    return clean(load_raw(Path(path_str)))
 
 
-df = load_data()
+# Selector de archivo de datos: permite elegir el más reciente o un CSV concreto
+available = list_data_files()
+options = ["Último"] + [p.name for p in available]
+choice = st.selectbox("Archivo de datos a usar", options=options, index=0)
 
-# Mostrar información del archivo de datos que se está usando (nombre y fecha de modificación)
+selected_filename = None if choice == "Último" else choice
+dp = data_path(selected_filename)
+
+# Mostrar info del archivo seleccionado
 try:
-    dp = data_path()
     if dp.exists():
         mtime = dp.stat().st_mtime
         import datetime
         ts = datetime.datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
-        st.caption(f"Archivo de datos en uso: `{dp.name}` — modificado: {ts}")
+        st.caption(f"Archivo de datos seleccionado: `{dp.name}` — modificado: {ts}")
     else:
-        st.caption(f"Archivo de datos esperado: `{dp.name}` (no existe aún)")
+        st.caption(f"Archivo de datos seleccionado: `{dp.name}` (no existe aún)")
 except Exception:
     pass
+
+# Cargar DataFrame usando la ruta seleccionada
+try:
+    df = load_data(str(dp))
+except FileNotFoundError:
+    st.error("Archivo seleccionado no encontrado. Descarga el CSV o elige otro archivo.")
+    st.stop()
+except Exception as e:
+    st.error(f"Error cargando datos: {e}")
+    st.stop()
 
 
 # Controles (≥3): año, modalidades, departamento, provincia dependiente, rango de meses

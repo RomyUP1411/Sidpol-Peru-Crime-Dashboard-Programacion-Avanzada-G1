@@ -1,6 +1,7 @@
 import sqlite3
 import pandas as pd
 from pathlib import Path
+from utils import log_time, logger
 
 # Ruta de la base de datos
 DB_PATH = Path(__file__).resolve().parent.parent / "data" / "denuncias.db"
@@ -10,6 +11,7 @@ def init_db():
     conn = sqlite3.connect(str(DB_PATH))
     return conn
 
+@log_time
 def cargar_csv_a_bd(csv_path):
     """Carga datos del CSV a la BD SQLite"""
     try:
@@ -19,8 +21,10 @@ def cargar_csv_a_bd(csv_path):
         df.to_sql('denuncias', conn, if_exists='replace', index=False)
         conn.commit()
         conn.close()
+        logger.info(f"CSV cargado en BD: {csv_path} ({len(df)} filas)")
         return len(df), True
     except Exception as e:
+        logger.exception(f"Error cargando CSV a BD: {e}")
         return 0, False
 
 def consultar_bd(sql_query):
