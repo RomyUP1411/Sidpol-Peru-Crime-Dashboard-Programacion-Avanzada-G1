@@ -1,48 +1,69 @@
 from __future__ import annotations
 
-import streamlit as st
 import pandas as pd
-import os
+import streamlit as st
 
+from descargar_datos import actualizar_toda_la_data
 from processing import (
-    data_path,
-    load_raw,
     clean,
+    data_path,
     filter_df,
+    load_raw,
+    compute_kpis,
     by_modalidad,
     monthly_trend,
     top_departamentos,
     heatmap_modalidad_mes,
-    compute_kpis,
 )
-from viz import bar_modalidad, line_trend, bar_top_departamentos, heatmap_mod_mes
-from descargar_datos import actualizar_toda_la_data
+from viz import bar_modalidad, bar_top_departamentos, heatmap_mod_mes, line_trend
 
-# Configuración de la página
-st.set_page_config(page_title="SIDPOL Perú - Prototipo", layout="wide")
+# Configuracion de la pagina
+st.set_page_config(page_title="SIDPOL Peru - Prototipo", layout="wide")
 
-# Carga de datos con caché
+
+# Carga de datos con cache
 @st.cache_data(show_spinner=False)
 def load_data() -> pd.DataFrame:
     return clean(load_raw(data_path()))
 
 
+# --- Barra lateral: actualizar datos ---
+with st.sidebar:
+    st.header("Gestion de Datos")
+    st.write("Actualiza la base de datos directamente desde datosabiertos.gob.pe")
+
+    if st.button("Actualizar datos (scraping)"):
+        with st.spinner("Conectando y descargando CSV..."):
+            try:
+                resultados = actualizar_toda_la_data()
+                for linea in resultados:
+                    if "Error" in linea or "Fallo" in linea:
+                        st.error(linea)
+                    else:
+                        st.success(linea)
+                st.cache_data.clear()
+                st.success("Datos actualizados. Recargando vista...")
+                st.experimental_rerun()
+            except Exception as e:
+                st.error(f"Ocurrio un error critico: {e}")
+
+
 df = load_data()
 
-# Título y fuente/licencia
+# Titulo y fuente/licencia
 st.title("Dashboard de denuncias policiales (SIDPOL) - Prototipo")
 st.caption(
-    "Fuente: SIDPOL/SIDPPOL – MININTER. Variables: AÑO, MES, DEPARTAMENTO, PROVINCIA, DISTRITO, MODALIDADES, cantidad. Licencia ODC-By."
+    "Fuente: SIDPOL/SIDPPOL - MININTER. Variables: ANO, MES, DEPARTAMENTO, PROVINCIA, DISTRITO, MODALIDADES, cantidad. Licencia ODC-By."
 )
 
-# Controles (Año, Modalidades, Departamento, Provincia dependiente, Rango Mes)
-years = sorted([int(x) for x in df["AÑO"].dropna().unique()]) if "AÑO" in df.columns else []
+# Controles (Ano, Modalidades, Departamento, Provincia dependiente, Rango Mes)
+years = sorted([int(x) for x in df["ANO"].dropna().unique()]) if "ANO" in df.columns else []
 mods = sorted([m for m in df["MODALIDADES"].dropna().unique()]) if "MODALIDADES" in df.columns else []
 dptos = sorted([d for d in df["DEPARTAMENTO"].dropna().unique()]) if "DEPARTAMENTO" in df.columns else []
 
 c1, c2, c3, c4 = st.columns(4)
 with c1:
-    year_sel = st.selectbox("Año", options=years, index=len(years) - 1 if years else 0) if years else None
+    year_sel = st.selectbox("Ano", options=years, index=len(years) - 1 if years else 0) if years else None
 with c2:
     mods_sel = st.multiselect("Modalidades", options=mods, default=mods[:3] if len(mods) >= 3 else mods)
 with c3:
@@ -50,7 +71,7 @@ with c3:
 with c4:
     mes_sel = st.slider("Mes (rango)", min_value=1, max_value=12, value=(1, 12), step=1)
 
-# Control dependiente de provincia si se eligió un departamento
+# Control dependiente de provincia si se eligio un departamento
 prov_sel = None
 if dpto_sel != "Todos" and "DEPARTAMENTO" in df.columns:
     provs = sorted([p for p in df[df["DEPARTAMENTO"] == dpto_sel]["PROVINCIA"].dropna().unique()]) if "PROVINCIA" in df.columns else []
@@ -63,13 +84,13 @@ df_f = filter_df(df, year_sel, mods_sel, dpto_sel, prov_sel, mes_sel)
 kpis = compute_kpis(df_f)
 k1, k2, k3, k4 = st.columns(4)
 k1.metric(label="Denuncias totales", value=f"{kpis['total']:,}")
-k2.metric(label="Variación % vs período previo", value=f"{kpis['var_pct']}%")
-k3.metric(label="Modalidad más frecuente", value=kpis["top_modalidad"])
-k4.metric(label="Departamento con más denuncias", value=kpis["top_departamento"])
+k2.metric(label="Variacion % vs periodo previo", value=f"{kpis['var_pct']}%")
+k3.metric(label="Modalidad mas frecuente", value=kpis["top_modalidad"])
+k4.metric(label="Departamento con mas denuncias", value=kpis["top_departamento"])
 
-# Tabla principal (selección segura de columnas)
+# Tabla principal (seleccion segura de columnas)
 st.subheader("Tabla filtrada")
-display_cols = [c for c in ["AÑO", "MES", "DEPARTAMENTO", "PROVINCIA", "DISTRITO", "MODALIDADES", "cantidad"] if c in df_f.columns]
+display_cols = [c for c in ["ANO", "MES", "DEPARTAMENTO", "PROVINCIA", "DISTRITO", "MODALIDADES", "cantidad"] if c in df_f.columns]
 if df_f.empty or not display_cols:
     st.info("No hay registros o columnas esperadas para el filtro seleccionado.")
 else:
@@ -77,31 +98,8 @@ else:
         df_f[display_cols].sort_values(["MES", "cantidad"], ascending=[True, False]),
         use_container_width=True,
     )
-# --- BARRA LATERAL (SIDEBAR) ---
-with st.sidebar:
-    st.header("Gestión de Datos")
-    st.write("Actualiza la base de datos directamente desde datosabiertos.gob.pe")
-    
-    if st.button("🔄 Actualizar Datos (Scraping)"):
-        with st.spinner("Conectando con datosabiertos.gob.pe y descargando archivos..."):
-            try:
-                # Llamamos a la función que creamos
-                resultados = actualizar_toda_la_data()
-                
-                # Mostramos resultados
-                for linea in resultados:
-                    if "Error" in linea or "Fallo" in linea:
-                        st.error(linea)
-                    else:
-                        st.success(linea)
-                
-                # Limpiamos la caché de Streamlit para que recargue los datos nuevos
-                st.cache_data.clear()
-                st.success("¡Datos actualizados! Por favor recarga la página si no ves los cambios.")
-                
-            except Exception as e:
-                st.error(f"Ocurrió un error crítico: {e}")
-# Gráficos
+
+# Graficos
 col1, col2 = st.columns(2)
 with col1:
     st.subheader("Denuncias por modalidad")
@@ -118,6 +116,4 @@ st.altair_chart(bar_top_departamentos(top_departamentos(df_f)), use_container_wi
 # st.subheader("Modalidad vs Mes (heatmap)")
 # st.altair_chart(heatmap_mod_mes(heatmap_modalidad_mes(df_f)), use_container_width=True)
 
-# Nota final de citación
-
-st.caption("Datos 2018–2025, cortes mensuales; procedencia y variables según diccionario y metadatos de SIDPOL/SIDPPOL – MININTER.")
+st.caption("Datos 2018-2025, cortes mensuales; procedencia y variables segun diccionario y metadatos de SIDPOL/SIDPPOL - MININTER.")

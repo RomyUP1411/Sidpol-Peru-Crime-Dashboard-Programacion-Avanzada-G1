@@ -1,41 +1,43 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Tuple, Optional, List, Dict
 
 import pandas as pd
 
 
-# Devuelve la ruta del CSV en data/; busca el nombre esperado o el primero que coincida
+# Devuelve la ruta del CSV en data/; intenta nombre exacto y, si no, busca por patrón
 def data_path() -> Path:
     data_dir = Path(__file__).resolve().parents[1] / "data"
     exact = data_dir / "DATASET_Denuncias_Policiales_Enero 2018 a Setiembre 2025.csv"
     if exact.exists():
         return exact
+    # Fallback: primer CSV que empiece con el patrón
     for p in sorted(data_dir.glob("DATASET_Denuncias_Policiales*.csv")):
         return p
     raise FileNotFoundError("No se encontró el CSV en data/; verifica el nombre o ruta.")
 
 
+# Lee el CSV original (maneja BOM y carga perezosa)
 def load_raw(path: Path) -> pd.DataFrame:
-    # Maneja BOM y carga perezosa
     return pd.read_csv(path, encoding="utf-8-sig", low_memory=False)
 
 
+# Normaliza nombres de columnas
 def _normalize_cols(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df.columns = [c.strip() for c in df.columns]
     return df
 
 
+# Limpia, tipifica y renombra encabezados para la UI
 def clean(df: pd.DataFrame) -> pd.DataFrame:
-    """Limpia, renombra y tipifica columnas para la UI."""
     df = _normalize_cols(df)
 
+    # Soporta variantes con y sin subrayados
     rename_candidates = {
-        "ANIO": "ANO",
-        "AÑO": "ANO",
-        "A�'O": "ANO",
+        "ANIO": "AÑO",
+        "AÑO": "AÑO",
         "MES": "MES",
         "DPTOHECHONEW": "DEPARTAMENTO",
         "DPTO_HECHO_NEW": "DEPARTAMENTO",
@@ -48,32 +50,38 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
         "cantidad": "cantidad",
         "CANTIDAD": "cantidad",
     }
+    # Construir mapa efectivo solo con columnas presentes
     effective_map = {src: dst for src, dst in rename_candidates.items() if src in df.columns}
     df = df.rename(columns=effective_map)
 
-    if "ANO" in df.columns:
-        df["ANO"] = pd.to_numeric(df["ANO"], errors="coerce").astype("Int64")
+    # Tipificación conforme al diccionario
+    if "AÑO" in df.columns:
+        df["AÑO"] = pd.to_numeric(df["AÑO"], errors="coerce").astype("Int64")
     if "MES" in df.columns:
         df["MES"] = pd.to_numeric(df["MES"], errors="coerce").astype("Int64")
     if "cantidad" in df.columns:
         df["cantidad"] = pd.to_numeric(df["cantidad"], errors="coerce").fillna(0).astype("int64")
 
+    # Asegurar tipos string para categóricas esperadas
     for col in ["DEPARTAMENTO", "PROVINCIA", "DISTRITO", "MODALIDADES"]:
         if col in df.columns:
             df[col] = df[col].astype("string")
 
+    # Limpiar valores inválidos
     if "MES" in df.columns:
         df = df[(df["MES"] >= 1) & (df["MES"] <= 12)]
     if "cantidad" in df.columns:
         df.loc[df["cantidad"] < 0, "cantidad"] = 0
 
-    req = [c for c in ["ANO", "MES"] if c in df.columns]
+    # Remover filas sin año/mes válidos
+    req = [c for c in ["AÑO", "MES"] if c in df.columns]
     if req:
         df = df.dropna(subset=req)
 
     return df
 
 
+# Filtro único para año, modalidades, dpto, provincia, rango de meses
 def filter_df(
     df: pd.DataFrame,
     anio: Optional[int],
@@ -83,8 +91,8 @@ def filter_df(
     mes_range: Optional[Tuple[int, int]],
 ) -> pd.DataFrame:
     out = df
-    if anio is not None and "ANO" in out.columns:
-        out = out[out["ANO"] == anio]
+    if anio is not None and "AÑO" in out.columns:
+        out = out[out["AÑO"] == anio]
     if modalidades and "MODALIDADES" in out.columns:
         out = out[out["MODALIDADES"].isin(modalidades)]
     if dpto and dpto != "Todos" and "DEPARTAMENTO" in out.columns:
@@ -97,6 +105,7 @@ def filter_df(
     return out
 
 
+# Agregaciones para visualizaciones
 def by_modalidad(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty or "MODALIDADES" not in df.columns:
         return pd.DataFrame({"MODALIDADES": [], "cantidad": []})
@@ -110,7 +119,30 @@ def by_modalidad(df: pd.DataFrame) -> pd.DataFrame:
 def monthly_trend(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty or "MES" not in df.columns:
         return pd.DataFrame({"MES": [], "cantidad": []})
-    return df.groupby("MES", as_index=False)["cantidad"].sum().sort_values("MES")
+    return (
+        df.groupby("MES", as_index=False)["cantidad"]
+        .sum()
+        .sort_values("MES")
+    )
+
+def data_path() -> Path:
+    data_dir = Path(__file__).resolve().parents[1] / "data"
+    
+    # 1. Prioridad: El archivo estandarizado que descarga nuestro script
+    nuevo_estandar = data_dir / "DATASET_Denuncias_Policiales.csv"
+    if nuevo_estandar.exists():
+        return nuevo_estandar
+        
+    # 2. Fallback: Busca el nombre antiguo específico (si no se ha actualizado aún)
+    antiguo_exacto = data_dir / "DATASET_Denuncias_Policiales_Enero 2018 a Setiembre 2025.csv"
+    if antiguo_exacto.exists():
+        return antiguo_exacto
+
+    # 3. Último recurso: Cualquier CSV que empiece con el patrón
+    for p in sorted(data_dir.glob("DATASET_Denuncias_Policiales*.csv")):
+        return p
+        
+    raise FileNotFoundError("No se encontró el CSV en data/; verifica haber ejecutado la actualización.")
 
 
 def top_departamentos(df: pd.DataFrame, n: int = 10) -> pd.DataFrame:
@@ -134,6 +166,7 @@ def heatmap_modalidad_mes(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+# KPIs calculados sobre el DataFrame filtrado
 def compute_kpis(df: pd.DataFrame) -> Dict[str, object]:
     if df.empty or "cantidad" not in df.columns:
         return {"total": 0, "var_pct": 0.0, "top_modalidad": "N/A", "top_departamento": "N/A"}
@@ -141,8 +174,8 @@ def compute_kpis(df: pd.DataFrame) -> Dict[str, object]:
     total = int(df["cantidad"].sum())
 
     var_pct = 0.0
-    if all(c in df.columns for c in ["ANO", "MES"]):
-        series = df.groupby(["ANO", "MES"])["cantidad"].sum().sort_index()
+    if all(c in df.columns for c in ["AÑO", "MES"]):
+        series = df.groupby(["AÑO", "MES"])["cantidad"].sum().sort_index()
         if len(series) >= 2:
             prev = series.iloc[-2]
             curr = series.iloc[-1]
@@ -166,4 +199,5 @@ def compute_kpis(df: pd.DataFrame) -> Dict[str, object]:
         "var_pct": round(var_pct, 2),
         "top_modalidad": top_modalidad,
         "top_departamento": top_departamento,
+
     }
